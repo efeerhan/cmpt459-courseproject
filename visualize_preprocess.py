@@ -42,25 +42,77 @@ def main():
 
     # ======================PART 1: BARPLOT======================
 
-    # confirmed cases/population
-    #scrap cases
-
     world_loc = world.merge(location, how='right', left_on='country', right_on='country')
-    world_loc['res'] = (world_loc['Confirmed']/world_loc['population']*100)
+    world_loc_confirmed = world_loc.groupby('country')['Confirmed'].sum().reset_index()
+    print(world_loc_confirmed.columns)
+    print(world_loc_confirmed.head(10))
 
-    world_loc_counts = world_loc.groupby('continent')['res'].sum().reset_index()
-    #world_loc_counts.reset_index(inplace=True)
-    print(world_loc_counts.columns)
-    world_loc_counts['population'] = world_loc['population']
-    #world_loc_counts.columns = ['continent', 'size', 'population']
-    print(world_loc_counts.head(7))
+    world_loc_population = world_loc.groupby('country')['population'].max().reset_index()
+    world_loc_population = world_loc_population.dropna(axis = 0)
+    print(world_loc_population.columns)
+    print(world_loc_population.head(10))
+
+    world_loc_confirmed = world_loc_confirmed.merge(world_loc_population, on = ['country'])
+    world_loc_confirmed = world_loc_confirmed.merge(continent_map, on = ['country'])
+
+    print(world_loc_confirmed.columns)
+    print(world_loc_confirmed.head(10))
+
+    world_loc_confirmed['res'] = (world_loc_confirmed['Confirmed']/world_loc_confirmed['population']*100)
+
+    print(world_loc_confirmed.columns)
+    print(world_loc_confirmed.head(10))
+
     cmap = plt.get_cmap('bwr')
+    plt.bar(world_loc_confirmed['continent'], world_loc_confirmed['res'], color = cmap(world_loc_confirmed['res']/max(world_loc_confirmed['res'])))
+    plt.show()
+    plt.bar(world_loc_confirmed['continent'], world_loc_confirmed['population'])
+    plt.show()
+
+    # ======================PART 2: WORLD MAP=====================
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    world_loc = world_loc.merge(world_loc_confirmed, on = 'country')
+    world_loc.plot(column = 'res', cmap='YlGnBu', kind = 'geo', ax=ax, legend = True)
+    plt.show()
+
+    return
 
 
+
+    world_loc_confirmed = world_loc_confirmed.merge(world_loc, on = ['country'])
+    world_loc_confirmed['res'] = (world_loc_confirmed['Confirmed']/world_loc_confirmed['population']*100)
+    print(world_loc_confirmed.columns)
+    print(world_loc_confirmed.head(10))
+    world_loc_confirmed = world_loc_confirmed.merge(continent_map, how='left',on='country')
+    print(world_loc_confirmed.columns)
+    print(world_loc_confirmed.head(10))
+
+    world_loc_confirmed['res'].replace(np.inf, np.nan, inplace=True)
+    world_loc_confirmed.dropna(subset=['res'], inplace=True)
+
+    world_loc_counts = world_loc_confirmed.groupby('continent')['res'].sum().reset_index()
+    world_loc_pop = world_loc_confirmed.groupby('continent')['population'].sum().reset_index()
+    world_loc_counts = world_loc_counts.merge(world_loc_pop, on = ['continent'])
+    print(world_loc_counts.head(10))
+
+    cmap = plt.get_cmap('bwr')
     plt.bar(world_loc_counts['continent'], world_loc_counts['res'], color = cmap(world_loc_counts['res'] / max(world_loc_counts['res'])))
     plt.show()
     plt.bar(world_loc_counts['continent'], world_loc_counts['population'])
     plt.show()
+
+    return
+
+
+    world_loc_counts = world_loc.groupby('continent')['res'].sum().reset_index()
+    #world_loc_counts.reset_index(inplace=True)
+    print(world_loc_counts.columns)
+    world_loc_pop = world_loc.groupby('continent')['population'].sum().reset_index()
+    world_loc_counts = world_loc_counts.merge(world_loc_pop, on = ['continent'])
+    print(world_loc_counts.columns)
+    #world_loc_counts.columns = ['continent', 'size', 'population']
+    print(world_loc_counts.head(7))
 
 
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -125,8 +177,6 @@ def main():
 
     ### plot availability of data/population
 
-    #add column 'geometry'
-    fig, ax = plt.subplots(figsize=(10, 8))
     
 
     # Merge data with world geometries based on geometry
