@@ -13,23 +13,23 @@ def main():
     test = pd.read_csv('data/cases_test.csv', usecols=lambda x: x not in ['latitude', 'longitude'])
     continent_map = pd.read_csv('data/countries_continent.csv')
 
-    # import geo data for heatmap and population info
-    world = gpd.read_file('data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp')[['ADMIN', 'CONTINENT', 'POP_EST', 'geometry']]
-    world.columns = ['country', 'continent', 'population', 'geometry']
-    #world[world['country'] == 'United States of America']['country'] == 'United States'
-    world['country'] = world['country'].replace('United States of America', 'United States')
-
-    location.dropna(axis=1)
-    #location[location['country'] == 'US']['country'] == 'United States'
-    location['country'] = location['country'].replace('US', 'United States')
-    #location[location['country'] == 'Korea, South']['country'] == 'South Korea'
-    location['country'] = location['country'].replace('Korea, South', 'South Korea')
-    location = location.sort_values('country')
-
     print('\ndatasets imported')
     print('location: {0} rows'.format(len(location)))
     print('train: {0} rows'.format(len(train)))
     print('test: {0} rows\n'.format(len(test)))
+
+    # import geo data for heatmap and population info
+    world = gpd.read_file('data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp')[['ADMIN', 'CONTINENT', 'POP_EST', 'geometry']]
+    world.columns = ['country', 'continent', 'population', 'geometry']
+
+    #renaming the US and South Korea in the datasets to ensure consistency when joining with the cases
+    location['country'] = location['country'].replace('US', 'United States')
+    location['country'] = location['country'].replace('Korea, South', 'South Korea')
+    world['country'] = world['country'].replace('United States of America', 'United States')
+
+    location.dropna(axis=1)
+    train.dropna(axis=1)
+    location = location.sort_values('country')
 
 
     # ======================
@@ -58,25 +58,70 @@ def main():
     print(world_loc_confirmed.columns)
     print(world_loc_confirmed.head(10))
 
-    world_loc_confirmed['res'] = (world_loc_confirmed['Confirmed']/world_loc_confirmed['population']*100)
+    world_loc_confirmed['Expected_Mortality_Rate'] = (world_loc_confirmed['Confirmed']/world_loc_confirmed['population']*100)
 
     print(world_loc_confirmed.columns)
     print(world_loc_confirmed.head(10))
 
     cmap = plt.get_cmap('bwr')
-    plt.bar(world_loc_confirmed['continent'], world_loc_confirmed['res'], color = cmap(world_loc_confirmed['res']/max(world_loc_confirmed['res'])))
+    plt.bar(world_loc_confirmed['continent'], world_loc_confirmed['Expected_Mortality_Rate'], color = cmap(world_loc_confirmed['Expected_Mortality_Rate']/max(world_loc_confirmed['Expected_Mortality_Rate'])))
     plt.show()
     plt.bar(world_loc_confirmed['continent'], world_loc_confirmed['population'])
     plt.show()
 
     # ======================PART 2: WORLD MAP=====================
 
-    fig, ax = plt.subplots(figsize=(10, 10))
-    world_loc = world_loc.merge(world_loc_confirmed, on = 'country')
-    world_loc.plot(column = 'res', cmap='YlGnBu', kind = 'geo', ax=ax, legend = True)
+    fig, ax = plt.subplots(figsize=(12, 8))
+    world_loc = world_loc.merge(world_loc_confirmed, on = 'country', how = 'right')
+    world_loc.plot(column = 'Expected_Mortality_Rate', cmap='bwr', kind = 'geo', ax=ax, legend = True)
     plt.show()
+    
 
+    # ===================== DATA PREPROCESSING ====================
+    # Handle the missing values. 
+    # Join both location and case data on both country and province together as a primary key and add an ‘Expected_Mortality_Rate’ to the cases dataset. 
+    # Find out what is the best strategy for dealing with missing values and mention and explain your choice in the report.
+
+    # Join both location and case data on both country and province together as a primary key
+    agg = train.merge(location, on=['country','province'], how = 'left')
+    #agg = train.merge(location, on='country', how = 'left')
+    agg = agg.merge(world_loc_confirmed, on = 'country')
+
+    agg.dropna(axis=1)
+    agg = agg.sort_values('country')
+    agg.reset_index()
+    agg.drop('Confirmed_x', axis=1, inplace=True)
+    agg.drop('outcome_group', axis=1, inplace=True)
+    agg.drop('additional_information', axis=1, inplace=True)
+    agg.drop('source', axis=1, inplace=True)
+
+
+    #agg['Expected_Mortality_Rate'] = (agg['Confirmed']/agg['population']*100)
+    #agg = agg.merge(continent_map, how='left',on='country')
+    pd.set_option('display.max_columns', None)
+    print(agg.columns)
+    print(agg.head(10))
     return
+    
+def debug_old():
+    ### debug for all cols in world
+    # world_deb = gpd.read_file('data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp')
+    # pd.set_option('display.max_columns', None)
+    # print(world_deb.head())
+
+    # location = pd.read_csv('data/location.csv', usecols=['Country_Region','Lat','Long_']) \
+    #     .rename(columns=({'Country_Region': 'country','Lat': 'latitude','Long_': 'longitude'}))
+    # train = pd.read_csv('data/cases_train.csv', usecols=['country','latitude','longitude'])
+    # test = pd.read_csv('data/cases_test.csv', usecols=['country','latitude','longitude'])
+
+    # Plotting heatmap
+    fig, ax = plt.subplots(figsize=(10, 6))
+    #agg_geo = gpd.GeoDataFrame(agg, geometry=gpd.points_from_xy(agg['longitude'], agg['latitude']))
+   # world_pivot = agg_geo.pivot_table('latitude','longitude', columns='continent')
+    #sns.heatmap(world_pivot, cmap='YlGnBu', ax=ax, annot=True, fmt=".0f", cbar_kws={'label': 'Value'})
+    # sns.heatmap(world.pivot_table(index='continent', columns='count'), cmap='YlGnBu', ax=ax, annot=True, fmt=".0f", cbar_kws={'label': 'Value'})
+    ax.set_title('Continental Heatmap')
+    plt.show()
 
 
 
@@ -121,33 +166,6 @@ def main():
     return
 
 
-
-    # ===================== DATA PREPROCESSING ====================
-    # Handle the missing values. 
-    # Join both location and case data on both country and province together as a primary key and add an ‘Expected_Mortality_Rate’ to the cases dataset. 
-    # Find out what is the best strategy for dealing with missing values and mention and explain your choice in the report.
-    
-    location.dropna(axis=1)
-    train.dropna(axis=1)
-    # Join both location and case data on both country and province together as a primary key
-    agg = train.merge(location, on=['country','province'], how = 'left')
-    # agg = pd.concat([train,location]).reset_index(drop=True)
-    # Handle the missing values. 
-    agg.dropna(axis=1)
-    agg[agg['country'] == 'US']['country'] == 'United States'
-    agg[agg['country'] == 'Korea, South']['country'] == 'South Korea'
-    agg = agg.sort_values('country')
-
-
-
-    agg['Expected_Mortality_Rate'] = (agg['Confirmed']/world[world['country'] == agg['country']]['population'])
-    agg = agg.merge(continent_map, how='left',on='country')
-    print(agg.columns)
-    print(agg.head(10))
-    return
-    
-
-
     # ======================
     # First, you have to visualize the data. 
     # Create a bar plot of data availability based on continents. 
@@ -187,30 +205,8 @@ def main():
     plt.show()
     return
 
-    
 
 
-
-    
-def debug_old():
-    ### debug for all cols in world
-    # world_deb = gpd.read_file('data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp')
-    # pd.set_option('display.max_columns', None)
-    # print(world_deb.head())
-
-    # location = pd.read_csv('data/location.csv', usecols=['Country_Region','Lat','Long_']) \
-    #     .rename(columns=({'Country_Region': 'country','Lat': 'latitude','Long_': 'longitude'}))
-    # train = pd.read_csv('data/cases_train.csv', usecols=['country','latitude','longitude'])
-    # test = pd.read_csv('data/cases_test.csv', usecols=['country','latitude','longitude'])
-
-    # Plotting heatmap
-    fig, ax = plt.subplots(figsize=(10, 6))
-    #agg_geo = gpd.GeoDataFrame(agg, geometry=gpd.points_from_xy(agg['longitude'], agg['latitude']))
-   # world_pivot = agg_geo.pivot_table('latitude','longitude', columns='continent')
-    #sns.heatmap(world_pivot, cmap='YlGnBu', ax=ax, annot=True, fmt=".0f", cbar_kws={'label': 'Value'})
-    # sns.heatmap(world.pivot_table(index='continent', columns='count'), cmap='YlGnBu', ax=ax, annot=True, fmt=".0f", cbar_kws={'label': 'Value'})
-    ax.set_title('Continental Heatmap')
-    plt.show()
 
 
 if __name__ == '__main__':
