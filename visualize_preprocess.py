@@ -16,29 +16,83 @@ def main():
     # import geo data for heatmap and population info
     world = gpd.read_file('data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp')[['ADMIN', 'CONTINENT', 'POP_EST', 'geometry']]
     world.columns = ['country', 'continent', 'population', 'geometry']
-    world[world['country'] == 'United States']['country'] == 'United States of America'
+    #world[world['country'] == 'United States of America']['country'] == 'United States'
+    world['country'] = world['country'].replace('United States of America', 'United States')
+
+    location.dropna(axis=1)
+    #location[location['country'] == 'US']['country'] == 'United States'
+    location['country'] = location['country'].replace('US', 'United States')
+    #location[location['country'] == 'Korea, South']['country'] == 'South Korea'
+    location['country'] = location['country'].replace('Korea, South', 'South Korea')
+    location = location.sort_values('country')
 
     print('\ndatasets imported')
     print('location: {0} rows'.format(len(location)))
     print('train: {0} rows'.format(len(train)))
     print('test: {0} rows\n'.format(len(test)))
 
+
+    # ======================
+    # First, you have to visualize the data. 
+    # Create a bar plot of data availability based on continents. 
+    # Are there any anomalies? How do they compare to the continents’ overall populations? 
+    # Use a color spectrum for different proportions; for example, the bars for the continents with a higher data availability should be redder and bluer otherwise. 
+    # Create a colored heatmap of the world, concerning the percentage of available data on the countries' populations.
+    # Note that you have to use both the location and cases csv files and combine them. Report all the plots and your interpretation of them.
+
+    # ======================PART 1: BARPLOT======================
+
+    # confirmed cases/population
+    #scrap cases
+
+    world_loc = world.merge(location, how='right', left_on='country', right_on='country')
+    world_loc['res'] = (world_loc['Confirmed']/world_loc['population']*100)
+
+    world_loc_counts = world_loc.groupby('continent')['res'].sum().reset_index()
+    #world_loc_counts.reset_index(inplace=True)
+    print(world_loc_counts.columns)
+    world_loc_counts['population'] = world_loc['population']
+    #world_loc_counts.columns = ['continent', 'size', 'population']
+    print(world_loc_counts.head(7))
+    cmap = plt.get_cmap('bwr')
+
+
+    plt.bar(world_loc_counts['continent'], world_loc_counts['res'], color = cmap(world_loc_counts['res'] / max(world_loc_counts['res'])))
+    plt.show()
+    plt.bar(world_loc_counts['continent'], world_loc_counts['population'])
+    plt.show()
+
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    world_loc.plot(column = 'res', cmap='YlGnBu', kind = 'geo', ax=ax, legend = True)
+    plt.show()
+    return
+
+
+
     # ===================== DATA PREPROCESSING ====================
     # Handle the missing values. 
     # Join both location and case data on both country and province together as a primary key and add an ‘Expected_Mortality_Rate’ to the cases dataset. 
     # Find out what is the best strategy for dealing with missing values and mention and explain your choice in the report.
     
-    #colourcode 
-    # confirmed cases/population
-    #scrap cases
-    agg = location.merge(train, on=['country','province'], how = 'left', suffixes=('_l','_r'))
+    location.dropna(axis=1)
+    train.dropna(axis=1)
+    # Join both location and case data on both country and province together as a primary key
+    agg = train.merge(location, on=['country','province'], how = 'left')
+    # agg = pd.concat([train,location]).reset_index(drop=True)
+    # Handle the missing values. 
     agg.dropna(axis=1)
-    # agg = pd.concat([location,train]).reset_index(drop=True)
     agg[agg['country'] == 'US']['country'] == 'United States'
     agg[agg['country'] == 'Korea, South']['country'] == 'South Korea'
     agg = agg.sort_values('country')
-    agg = pd.merge(agg, continent_map, how='left',on='country')
+
+
+
+    agg['Expected_Mortality_Rate'] = (agg['Confirmed']/world[world['country'] == agg['country']]['population'])
+    agg = agg.merge(continent_map, how='left',on='country')
     print(agg.columns)
+    print(agg.head(10))
+    return
     
 
 
@@ -52,6 +106,10 @@ def main():
 
     # ======================PART 1: BARPLOT======================
 
+    #colourcode 
+    # confirmed cases/population
+    #scrap cases
+
     agg_counts = pd.DataFrame(agg.groupby(['continent']).size())
     agg_counts.reset_index(inplace=True)
     print(agg_counts.columns)
@@ -59,6 +117,7 @@ def main():
     colours = plt.cm.RdBu(np.linspace(0,1,len(agg_counts['continent'])))
     plt.bar(agg_counts['continent'],agg_counts['size'], color = colours)
     plt.show()
+    return
     ### how well countries represented, plot ratio #cases in country/population
     # cases can be seen as subset of location, we can omit combining for 
 
@@ -73,7 +132,7 @@ def main():
     # Merge data with world geometries based on geometry
     world = world.merge(agg, how='left', left_on='country', right_on='country')
     print(world.columns)
-    world['res'] = (world['Confirmed'] + world['Deaths'] + world['Active'] + world['Recovered'])/world['population']
+    world['res'] = (world['Confirmed']/world['population'])
     world.plot(column = 'res', cmap='YlGnBu', kind = 'geo', ax=ax, legend = True)
     plt.show()
     return
