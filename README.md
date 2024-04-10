@@ -4,3 +4,4 @@
 - [sklearn](https://scikit-learn.org/)
 - [matplotlib](https://matplotlib.org)
 - [imblearn](https://imbalanced-learn.org)
+- [geopandas](https://geopandas.org)
