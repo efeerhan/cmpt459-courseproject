@@ -20,7 +20,7 @@ Belize,North America
 Benin,Africa
 Bhutan,Asia
 Bolivia,South America
-Bosnia and Herzegovina,Europe
+Bosnia and Herz.,Europe
 Botswana,Africa
 Brazil,South America
 Brunei,Asia
@@ -32,16 +32,15 @@ Cabo Verde,Africa
 Cambodia,Asia
 Cameroon,Africa
 Canada,North America
-Central African Republic,Africa
+Central African Rep.,Africa
 Chad,Africa
 Chile,South America
 China,Asia
 Colombia,South America
 Comoros,Africa
-Congo (Brazzaville),Africa
-Congo (Kinshasa),Africa
+Congo,Africa
 Costa Rica,North America
-Cote d'Ivoire,Africa
+Côte d'Ivoire,Africa
 Croatia,Europe
 Cuba,North America
 Cyprus,Asia
@@ -50,14 +49,14 @@ Denmark,Europe
 Diamond Princess,Europe
 Djibouti,Africa
 Dominica,North America
-Dominican Republic,North America
+Dominican Rep.,North America
 Ecuador,South America
 Egypt,Africa
 El Salvador,North America
-Equatorial Guinea,Africa
+Eq. Guinea,Africa
 Eritrea,Africa
 Estonia,Europe
-Eswatini,Africa
+eSwatini,Africa
 Ethiopia,Africa
 Fiji,Oceania
 Finland,Europe
@@ -156,10 +155,10 @@ Sierra Leone,Africa
 Singapore,Asia
 Slovakia,Europe
 Slovenia,Europe
-Solomon Islands,Oceania
+Solomon Is.,Oceania
 Somalia,Africa
 South Africa,Africa
-South Sudan,Africa
+S. Sudan,Africa
 Spain,Europe
 Sri Lanka,Asia
 Sudan,Africa
@@ -167,7 +166,7 @@ Suriname,South America
 Sweden,Europe
 Switzerland,Europe
 Syria,Asia
-Taiwan*,Asia
+Taiwan,Asia
 Tajikistan,Asia
 Tanzania,Africa
 Thailand,Asia
@@ -176,7 +175,6 @@ Togo,Africa
 Trinidad and Tobago,South America
 Tunisia,Africa
 Turkey,Asia
-US,North America
 Uganda,Africa
 Ukraine,Europe
 United Arab Emirates,Asia
@@ -195,5 +193,5 @@ Palau,Oceania
 Summer Olympics 2020,Asia
 Malaysia,Asia
 Tonga,Oceania
-United States,North America
+United States of America,North America
 South Korea,Asia

@@ -5,12 +5,13 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 
 def main():
-    location = pd.read_csv('data/location_2021.csv', usecols=['Country_Region','Lat','Long_']) \
+    location = pd.read_csv('data/location.csv', usecols=['Country_Region','Lat','Long_']) \
         .rename(columns=({'Country_Region': 'country','Lat': 'latitude','Long_': 'longitude'}))
-    train = pd.read_csv('data/cases_2021_train.csv', usecols=['country','latitude','longitude'])
-    test = pd.read_csv('data/cases_2021_test.csv', usecols=['country','latitude','longitude'])
+    train = pd.read_csv('data/cases_train.csv', usecols=['country','latitude','longitude'])
+    test = pd.read_csv('data/cases_test.csv', usecols=['country','latitude','longitude'])
     
     continent_map = pd.read_csv('data/countries_continent.csv')
+    populations = pd.read_csv('data/population.csv')
 
     print('\ndatasets imported')
     print('location: {0} rows'.format(len(location)))
@@ -31,9 +32,11 @@ def main():
     agg_counts = pd.DataFrame(agg.groupby(['continent']).size())
     agg_counts.reset_index(inplace=True)
     agg_counts.columns = ['continent', 'size']
+    agg_counts.merge(populations, on='continent')
     print(agg_counts)
-    plt.bar(agg_counts['continent'],agg_counts['size'])
-    plt.show()
+    # print(agg_counts)
+    # plt.bar(agg_counts['continent'],agg_counts['size'])
+    # plt.show()
     return
 
     # ======================PART 2: WORLD MAP======================
